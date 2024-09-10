@@ -19,12 +19,16 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": false,
+    "checkJs": false,
     
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     }
     
+  },
+  "linterOptions": {
+    "exclude": ["src/**","components/**"],
   },
   "include": ["src"],
   

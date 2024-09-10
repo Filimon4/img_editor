@@ -64,3 +64,16 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .add_btn::before {
+    content: '';
+    position: absolute;
+    top:0;
+    left:0;
+    width: 110%;
+    height: 110%;
+    border-radius: 100%;
+    background-color: #F2F5F7;
+  }
+}
