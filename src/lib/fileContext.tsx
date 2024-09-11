@@ -1,6 +1,5 @@
 import { createContext, useState } from "react";
 
-
 export const FileContext = createContext(null)
 
 export const FileContextProvider = ({children}) => {
