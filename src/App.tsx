@@ -7,11 +7,7 @@ function App() {
   const {file} = useContext(FileContext)
   return (
     <div className='h-[100vh] w-[100vw] flex justify-center items-center relative'>
-      {file ? <>
-        <ImgEditor />
-      </> : <>
-        <Uploader />
-      </>}
+      <Uploader />
     </div>
   )
 }
