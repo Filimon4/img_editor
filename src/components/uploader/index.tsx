@@ -15,13 +15,6 @@ const Uploader = () => {
   const [isDragging, setIsDraging] = useState(false)
   const [isImgLoading, setIsImgLoading] = useState(true)
   const [error, setError] = useState(false)
-  console.log(error)
-  useEffect(() => {
-    if (file){
-      console.log(file)
-
-    }
-  }, [file])  
 
   const onUploaderClick = (e) => {
     e.preventDefault()
@@ -34,7 +27,6 @@ const Uploader = () => {
     if (fileUploaderRef.current?.files.length > 0) {
       // console.log(fileUploaderRef.current?.files[0])
       const file = fileUploaderRef.current?.files[0]
-      console.log(file)
       setFile(file)
       if (file.size > 5000000) {
         setError(true)
