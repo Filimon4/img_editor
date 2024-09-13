@@ -36,7 +36,11 @@ export enum EFilterTypes {
 
 export type TImageAdjust = {
   crop: {
-    ratio: '1:1' | '16:9' | '4:3' | 'None'
+    ratio: '1:1' | '16:9' | '4:3' | 'None',
+    x: number,
+    y: number,
+    width: number,
+    height: number
   },
   resize: {
     width: number,
@@ -70,7 +74,11 @@ export const DefaultImageAdjust: TImageAdjust = {
     saturation: 0,
   },
   crop: {
-    ratio: 'None' 
+    ratio: 'None',
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0 
   },
   filter: {
     type: 'None'

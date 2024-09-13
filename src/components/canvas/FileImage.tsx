@@ -42,11 +42,7 @@ class FileImage extends React.Component<IFIleProps> {
   }
   shouldComponentUpdate(nextProps: Readonly<IFIleProps>, nextState: Readonly<{}>, nextContext: any): boolean {
     //@ts-ignore
-    
-    if (JSON.stringify(this.props) !== JSON.stringify(nextProps)) {
-      return true
-    }
-    return false
+    return true
   }
 
   loadImage() {
@@ -60,9 +56,10 @@ class FileImage extends React.Component<IFIleProps> {
     });
 
     this.resizeImg()
+    
   };
   resizeImg = () => {
-    if (this.props.refImage.current && this.props.refImage.current.width() && this.props.refImage.current.height() ) {
+    if (this.props.refImage.current && this.props.refImage.current.width() ) {
       if (this.aspectRation == null) {
         this.aspectRation = this.props.refImage.current.width() / this.props.refImage.current.height() 
       }
@@ -73,7 +70,6 @@ class FileImage extends React.Component<IFIleProps> {
       let imgHeight = null
       let x = null
       let y = null
-
       if (this.aspectRation > 1) {
         imgWidth = parentWidth * this.scale
         imgHeight = parentWidth / this.aspectRation * this.scale
@@ -95,13 +91,19 @@ class FileImage extends React.Component<IFIleProps> {
         x,
         y
       })
+      
+      // this.props.refImage.current.crop({
+      //   x: 0,
+      //   y: 0,
+      //   width: this.state.image.width,
+      //   height:this.state.image.height
+      // })
     }
   }
   setFilters = () => {
     const image = this.props.refImage.current
     if (image) {
       const {brightenes, contrast, exposition, saturation} = this.props.adjust.abjust
-      console.log(brightenes, contrast, exposition, saturation)
       image.cache();
       image.filters([Konva.Filters.Brighten, Konva.Filters.Contrast, Konva.Filters.HSL, Konva.Filters.HSV]);
       image.brightness(brightenes/100);

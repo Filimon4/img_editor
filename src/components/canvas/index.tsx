@@ -29,7 +29,7 @@ const CanvasEditor = memo(({editType}: {editType: ESettingsMenu}) => {
         <Layer>
           <FileImage adjust={adjust} refImage={refImage} file={file} x={0} y={0}  />
           {editType == ESettingsMenu.crop && <>
-            <CropImage refImage={refImage} />
+            <CropImage setAdjust={setAdjust} adjust={adjust} refImage={refImage} />
           </>}
           {editType == ESettingsMenu.resize && <>
             <ResizeImage refImage={refImage}/>

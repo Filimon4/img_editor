@@ -1,8 +1,12 @@
+import { TImageAdjust } from '@/lib/config';
+import Konva from 'konva'
 import React, { Component } from 'react'
 import { Circle, Image, Rect } from 'react-konva'
 
 export interface ICropProps {
-  refImage: React.MutableRefObject<any>
+  refImage: React.MutableRefObject<any>,
+  setAdjust: React.Dispatch<React.SetStateAction<TImageAdjust>>,
+  adjust: TImageAdjust
 }
 
 export default class CropImage extends Component<ICropProps> {
@@ -82,6 +86,16 @@ export default class CropImage extends Component<ICropProps> {
     this.state.rect.position({
       y: this.state.topLeft.getAttrs().y,
       x: this.state.topLeft.getAttrs().x
+    })
+    this.props.setAdjust({
+      ...this.props.adjust,
+      crop: {
+        ...this.props.adjust.crop,
+        x: this.state.rect.getAttrs().x,
+        y: this.state.rect.getAttrs().y,
+        width: this.state.rect.size().width,
+        height: this.state.rect.size().height,
+      }
     })
 
   }
