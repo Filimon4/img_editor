@@ -25,7 +25,7 @@ const CanvasEditor = memo(({editType}: {editType: ESettingsMenu}) => {
 
   return (
     <>
-      <Stage ref={refCanvas} width={870} height={500} className='border-2 border-black' >
+      <Stage ref={refCanvas} width={870} height={500} >
         <Layer>
           <FileImage adjust={adjust} refImage={refImage} file={file} x={0} y={0}  />
           {editType == ESettingsMenu.crop && <>
