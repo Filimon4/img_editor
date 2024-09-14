@@ -37,6 +37,7 @@ class FileImage extends React.Component<IFIleProps> {
   }
   
   componentDidUpdate(prevProps, prevState, snapShot) {
+    // this.setRotate()
     this.resizeImg()
     this.setFilters()
   }
@@ -81,23 +82,39 @@ class FileImage extends React.Component<IFIleProps> {
         imgWidth = parentHeight * this.scale
         imgHeight = parentWidth * this.aspectRation * this.scale
       }
+      console.log(Math.abs(this.props.adjust.rotate.deg) % 360)
       x = (parentWidth - imgWidth) / 2
       y = (parentHeight - imgHeight) / 2
+      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 90) {
+        x = x + (parentWidth - imgHeight) / 2
+        y = y + (parentHeight + imgHeight) / 2
+        imgWidth = parentHeight 
+        imgHeight = parentHeight / this.aspectRation
+      }
+      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 180) {
+        x = (x + imgWidth)
+        y = (y + imgHeight)
+      }
+      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 270) {
+        x = (parentWidth + imgHeight) / 2 - x
+        y = 0
+        imgWidth = parentHeight
+        imgHeight = parentHeight / this.aspectRation
+      }
       this.props.refImage.current.size({
         width: imgWidth,
         height: imgHeight
       })
+      if (this.props.refImage.current.scale().x == -1) {
+        x = x + imgWidth
+      }
+      if (this.props.refImage.current.scale().y == -1) {
+        y = y + imgHeight
+      }
       this.props.refImage.current.position({
         x,
         y
       })
-      
-      // this.props.refImage.current.crop({
-      //   x: 0,
-      //   y: 0,
-      //   width: this.state.image.width,
-      //   height:this.state.image.height
-      // })
     }
   }
   setFilters = () => {
@@ -111,6 +128,44 @@ class FileImage extends React.Component<IFIleProps> {
       image.value(exposition/100);
       image.luminance(saturation/100)
     }
+  }
+
+  setRotate = () => {
+    console.log('rotate')
+    console.log(this.props.refImage.current.scale())
+    this.props.refImage.current.rotation(this.props.adjust.rotate.deg)
+    if (this.props.adjust.rotate.flip.hor) {
+      this.props.refImage.current.scale({
+        x: 1,
+        y: this.props.refImage.current.scale().y
+      })
+    } else {
+      this.props.refImage.current.scale({
+        x: -1,
+        y: this.props.refImage.current.scale().y
+      })
+    }
+    if (this.props.adjust.rotate.flip.ver) {
+      this.props.refImage.current.scale({
+        x: this.props.refImage.current.scale().x,
+        y: 1
+      })
+    } else {
+      this.props.refImage.current.scale({
+        x: this.props.refImage.current.scale().x,
+        y: -1
+      })
+
+    }
+  }
+
+  setCrop = () => {
+    this.props.refImage.current.crop({
+      x: 0,
+      y: 0,
+      width: this.state.image.width,
+      height:this.state.image.height
+    })
   }
 
   render() {

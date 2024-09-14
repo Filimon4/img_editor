@@ -25,7 +25,7 @@ const CanvasEditor = memo(({editType}: {editType: ESettingsMenu}) => {
 
   return (
     <>
-      <Stage ref={refCanvas} width={870} height={500} >
+      <Stage ref={refCanvas} width={870} height={500} className='' >
         <Layer>
           <FileImage adjust={adjust} refImage={refImage} file={file} x={0} y={0}  />
           {editType == ESettingsMenu.crop && <>
@@ -36,9 +36,9 @@ const CanvasEditor = memo(({editType}: {editType: ESettingsMenu}) => {
           </>}
         </Layer>
       </Stage>
-      <button onClick={download}>C</button>
+      {/* <button onClick={download}>C</button>
       <a className='hidden' ref={refLink as unknown as React.LegacyRef<HTMLAnchorElement>} download={'img.png'}>
-      </a>
+      </a> */}
     </>
   )
 })

@@ -87,16 +87,18 @@ export default class CropImage extends Component<ICropProps> {
       y: this.state.topLeft.getAttrs().y,
       x: this.state.topLeft.getAttrs().x
     })
-    this.props.setAdjust({
-      ...this.props.adjust,
-      crop: {
-        ...this.props.adjust.crop,
-        x: this.state.rect.getAttrs().x,
-        y: this.state.rect.getAttrs().y,
-        width: this.state.rect.size().width,
-        height: this.state.rect.size().height,
-      }
-    })
+
+    // console.log(this.state.rect.getAttrs(), this.state.rect.size())
+    // this.props.setAdjust({
+    //   ...this.props.adjust,
+    //   crop: {
+    //     ...this.props.adjust.crop,
+    //     x: this.state.rect.getAttrs().x,
+    //     y: this.state.rect.getAttrs().y,
+    //     width: this.state.rect.size().width,
+    //     height: this.state.rect.size().height,
+    //   }
+    // })
 
   }
 
