@@ -2,11 +2,12 @@ import { FileContext } from '@/lib/fileContext';
 import React, { memo, useContext, useEffect, useRef, useState } from 'react'
 import { Stage, Layer, Text, Image, Rect } from 'react-konva';
 import FileImage from './FileImage';
-import { ESettingsMenu } from '@/lib/config';
+import { ESettingsMenu, Events } from '@/lib/config';
 import CropImage from './CropImage';
 import Konva from 'konva';
 import { ImageAdjustContext } from '@/lib/imageAdjustContext';
 import FiguresImage from './FiguresImage';
+import EventEmitter from "reactjs-eventemitter";
 
 const CanvasEditor = memo(({editType, width, height}: {editType: ESettingsMenu, width: number, height: number}) => {
   const {file} = useContext(FileContext);
@@ -16,13 +17,15 @@ const CanvasEditor = memo(({editType, width, height}: {editType: ESettingsMenu, 
   const refRect = useRef(null)
   const refLink = useRef<HTMLLinkElement>(null)
 
-  const download = (e) => {
-    refImage.current.toImage({quality: 1, mimeType: "image/png", callback(img) {
-      refLink.current.appendChild(img)
-      refLink.current.setAttribute('href', img.getAttribute('src'))
-      refLink.current.click()
-    }});
-  }
+  useEffect( () => {
+    EventEmitter.subscribe(Events.download, () => {
+      refCanvas.current.toImage({quality: 1, mimeType: "image/png", callback(img) {
+        refLink.current.appendChild(img)
+        refLink.current.setAttribute('href', img.getAttribute('src'))
+        refLink.current.click()
+      }});    
+    })
+  }, [])
 
   return (
     <>
@@ -35,7 +38,6 @@ const CanvasEditor = memo(({editType, width, height}: {editType: ESettingsMenu, 
           <FiguresImage setAdjust={setAdjust} adjust={adjust} />
         </Layer>
       </Stage>
-      <button onClick={download}>C</button>
       <a className='hidden' ref={refLink as unknown as React.LegacyRef<HTMLAnchorElement>} download={'img.png'}>
       </a>
     </>

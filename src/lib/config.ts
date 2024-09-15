@@ -85,7 +85,8 @@ export enum Events {
   'applyFilters',
   'setCrop',
   'makeElem',
-  'changeSettings'
+  'changeSettings',
+  'download'
 }
 
 export const DefaultImageAdjust: TImageAdjust = {
@@ -111,7 +112,7 @@ export const DefaultImageAdjust: TImageAdjust = {
     width: null
   },
   rotate: {
-    deg: 0,
+    deg: 180,
     flip: {
       hor: true,
       ver: true
@@ -347,13 +348,7 @@ export const settigsMenuConfig = {
           editValue: 'Sepia'
         },
       ]
-    },
-    {
-      type: ESettingTypes.submit,
-      text: 'Applay chagnes',
-      emitName: Events.applyFilters,
-      emitType: 'filter'
-    },
+    }
   ],
   [ESettingsMenu.text]: [
   ],

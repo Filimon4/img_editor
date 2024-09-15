@@ -100,8 +100,9 @@ class FileImage extends React.Component<IFIleProps, IFIleState> {
     })
     EventEmitter.subscribe(Events.applyCrop, (data: TImageAdjust['crop']) => {
       this.cropImg(data)
-      
     })
+
+
   }
 
   componentWillUnmount() {
@@ -173,63 +174,6 @@ class FileImage extends React.Component<IFIleProps, IFIleState> {
         y: 0,
         x: 0
       })
-      // this.props.refImage.current.crop({
-      //   width: this.state.crop.width,
-      //   height: this.state.crop.height,
-      //   x: this.state.crop.x,
-      //   y: this.state.crop.y
-      // })
-
-      // if (this.props.adjust.resize.aspect == true) {
-      //   this.aspectRation = this.props.refImage.current.width() / this.props.refImage.current.height() 
-        
-      //   if (this.aspectRation > 1) {
-      //     imgWidth = parentWidth * this.scale
-      //     imgHeight = parentWidth / this.aspectRation * this.scale
-      //   } else if (this.aspectRation == 1) {
-      //     const minDem = Math.min(parentHeight, parentWidth)
-      //     imgWidth = minDem * this.scale
-      //     imgHeight = minDem * this.scale
-      //   } else {
-      //     imgWidth = parentHeight * this.scale
-      //     imgHeight = parentWidth * this.aspectRation * this.scale
-      //   }
-      // }
-      // x = (parentWidth - imgWidth) / 2
-      // y = (parentHeight - imgHeight) / 2
-        
-      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 90) {
-      //   x = x + (parentWidth - imgHeight) / 2
-      //   y = y + (parentHeight + imgHeight) / 2
-      //   imgWidth = parentHeight 
-      //   imgHeight = parentHeight / this.aspectRation
-      // }
-      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 180) {
-      //   x = (x + imgWidth)
-      //   y = (y + imgHeight)
-      // }
-      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 270) {
-      //   x = (parentWidth + imgHeight) / 2 - x
-      //   y = 0
-      //   imgWidth = parentHeight
-      //   imgHeight = parentHeight / this.aspectRation
-      // }
-
-      // this.props.refImage.current.size({
-      //   width: imgWidth,
-      //   height: imgHeight
-      // })
-
-      // if (this.props.refImage.current.scale().x == -1) {
-      //   x = x + imgWidth
-      // }
-      // if (this.props.refImage.current.scale().y == -1) {
-      //   y = y + imgHeight
-      // }
-      // this.props.refImage.current.position({
-      //   x,
-      //   y
-      // })
   }
 
   setFilters = () => {
@@ -283,17 +227,33 @@ class FileImage extends React.Component<IFIleProps, IFIleState> {
       offsetY += this.props.refImage.current.size().height
     }
     this.props.refImage.current.rotation(this.state.rotate.deg)
-    if (Math.abs(this.state.rotate.deg) % 360 == 90) {
-      offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
-    }
-    if (Math.abs(this.state.rotate.deg) % 360 == 180) {
-      offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
-      offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
-
-    }
-    if (Math.abs(this.state.rotate.deg) % 360 == 270) {
-      offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
-      
+    if (this.state.rotate.deg <= 0) {
+      if (Math.abs(this.state.rotate.deg) % 360 == 90) {
+        offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+      }
+      if (Math.abs(this.state.rotate.deg) % 360 == 180) {
+        offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+        offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+      }
+      if (Math.abs(this.state.rotate.deg) % 360 == 270) {
+        offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+      }
+    } else {
+      if (Math.abs(this.state.rotate.deg) % 360 == 90) {
+        offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+        offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+        offsetX -= this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+      }
+      if (Math.abs(this.state.rotate.deg) % 360 == 180) {
+        offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+        offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+      }
+      if (Math.abs(this.state.rotate.deg) % 360 == 270) {
+        offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+        offsetY -= this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+        offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+      }
+      console.log(offsetX, offsetY, Math.abs(this.state.rotate.deg) % 360, this.props.refImage.current.scale().x)
     }
     this.props.refImage.current.offsetX(offsetX)
     this.props.refImage.current.offsetY(offsetY)
