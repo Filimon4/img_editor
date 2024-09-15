@@ -3,7 +3,7 @@ export enum ESettingsMenu {
   'crop',
   'resize',
   'rotate',
-  'abjust',
+  'adjust',
   'filter',
   'text',
   'line',
@@ -17,7 +17,8 @@ export enum ESettingTypes {
   'checkbox',
   'imgbox',
   'negslider',
-  'gallery'
+  'gallery',
+  'submit'
 }
 
 export enum ERotaionTypes {
@@ -31,7 +32,6 @@ export enum EFilterTypes {
   'none',
   'b&w',
   'sepia',
-  'vintage'
 }
 
 export type TImageAdjust = {
@@ -40,7 +40,7 @@ export type TImageAdjust = {
     x: number,
     y: number,
     width: number,
-    height: number
+    height: number,
   },
   resize: {
     width: number,
@@ -54,20 +54,42 @@ export type TImageAdjust = {
       ver: boolean
     }
   },
-  abjust: {
+  adjust: {
     brightenes: number,
     contrast: number,
     saturation: number,
     exposition: number
   },
   filter: {
-    type: 'None' | 'Black%White' | 'Sepia' | 'Vintage'
+    type: 'None' | 'Black&White' | 'Sepia' | 'Vintage'
   },
   elements: any[];
 }
 
+export type TCreateElem = {
+  type: EElemTypes,
+}
+
+export enum EElemTypes {
+  'text',
+  'line',
+  'circle',
+  'rect'
+}
+
+export enum Events {
+  'applyCrop',
+  'applyResize',
+  'applyRotate',
+  'applyAdjust',
+  'applyFilters',
+  'setCrop',
+  'makeElem',
+  'changeSettings'
+}
+
 export const DefaultImageAdjust: TImageAdjust = {
-  abjust: {
+  adjust: {
     brightenes: 0,
     contrast: 0,
     exposition: 0,
@@ -78,7 +100,7 @@ export const DefaultImageAdjust: TImageAdjust = {
     x: 0,
     y: 0,
     width: 0,
-    height: 0 
+    height: 0,
   },
   filter: {
     type: 'None'
@@ -91,8 +113,8 @@ export const DefaultImageAdjust: TImageAdjust = {
   rotate: {
     deg: 0,
     flip: {
-      hor: false,
-      ver: false
+      hor: true,
+      ver: true
     }
   },
   elements: []
@@ -115,9 +137,9 @@ export const editorNav = [
     menu: ESettingsMenu.rotate
   },
   {
-    img: 'public/abjust.svg',
-    text: 'Abjust',
-    menu: ESettingsMenu.abjust
+    img: 'public/adjust.svg',
+    text: 'adjust',
+    menu: ESettingsMenu.adjust
   },
   {
     img: 'public/filter.svg',
@@ -133,19 +155,51 @@ export const dropdownNav = [
     menu: [
       {
         text: 'Text',
-        img: 'public/Elem_Text.svg'
+        img: 'public/Elem_Text.svg',
+        elemType: EElemTypes.text,
+        data: {
+          x: 0,
+          y: 0,
+          text: 'hello',
+          fontSize: 15,
+          fontFamily: "Arial",
+          fill: 'red'
+        }
       },
       {
         text: 'Line',
-        img: 'public/Elem_Line.svg'
+        img: 'public/Elem_Line.svg',
+        elemType: EElemTypes.line,
+        data: {
+          x: 100,
+          y: 100,
+          stroke: 'green',
+          strokeWidth: 4,
+          points: [0, 0, 100, 100]
+        }
       },
       {
         text: 'Circle',
-        img: 'public/Elem_Circle.svg'
+        img: 'public/Elem_Circle.svg',
+        elemType: EElemTypes.circle,
+        data: {
+          x: 0,
+          y: 0,
+          radius: 20,
+          fill: "blue"
+        },
       },
       {
         text: 'Rectangle',
-        img: 'public/Elem_Rect.svg'
+        img: 'public/Elem_Rect.svg',
+        elemType: EElemTypes.rect,
+        data: {
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 100,
+          fill: 'blue'
+        }
       },
     ]
   },
@@ -161,7 +215,13 @@ export const settigsMenuConfig = {
       ],
       editType: 'crop',
       editValue: 'ratio'
-    }
+    },
+    {
+      type: ESettingTypes.submit,
+      text: 'Applay chagnes',
+      emitName: Events.setCrop,
+      emitType: 'crop'
+    },
   ],
   [ESettingsMenu.resize]: [
     {
@@ -190,6 +250,12 @@ export const settigsMenuConfig = {
       },
       editType: 'resize',
       editValue: 'aspect'
+    },
+    {
+      type: ESettingTypes.submit,
+      text: 'Applay chagnes',
+      emitName: Events.applyResize,
+      emitType: 'resize'
     },
   ],
   [ESettingsMenu.rotate]: [
@@ -226,32 +292,38 @@ export const settigsMenuConfig = {
           editValue: 'ver'
         },
       ],
-    },
+    }
   ],
-  [ESettingsMenu.abjust]: [
+  [ESettingsMenu.adjust]: [
     {
       type: ESettingTypes.negslider,
       text: 'Brightness',
-      editType: 'abjust',
+      editType: 'adjust',
       editValue: 'brightenes'
     },
     {
       type: ESettingTypes.negslider,
       text: 'Contrast',
-      editType: 'abjust',
+      editType: 'adjust',
       editValue: 'contrast'
     },
     {
       type: ESettingTypes.negslider,
       text: 'Saturation',
-      editType: 'abjust',
+      editType: 'adjust',
       editValue: 'saturation'
     },
     {
       type: ESettingTypes.negslider,
       text: 'Exposition',
-      editType: 'abjust',
+      editType: 'adjust',
       editValue: 'exposition'
+    },
+    {
+      type: ESettingTypes.submit,
+      text: 'Applay chagnes',
+      emitName: Events.applyAdjust,
+      emitType: 'adjust'
     },
   ],
   [ESettingsMenu.filter]: [
@@ -274,13 +346,14 @@ export const settigsMenuConfig = {
           editType: 'type',
           editValue: 'Sepia'
         },
-        {
-          text: 'Vintage',
-          editType: 'type',
-          editValue: 'Vintage'
-        },
       ]
-    }
+    },
+    {
+      type: ESettingTypes.submit,
+      text: 'Applay chagnes',
+      emitName: Events.applyFilters,
+      emitType: 'filter'
+    },
   ],
   [ESettingsMenu.text]: [
   ],

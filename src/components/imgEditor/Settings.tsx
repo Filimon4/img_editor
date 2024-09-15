@@ -1,4 +1,4 @@
-import { ERotaionTypes, ESettingsMenu, ESettingTypes, settigsMenuConfig, TImageAdjust } from '@/lib/config'
+import { ERotaionTypes, ESettingsMenu, ESettingTypes, Events, settigsMenuConfig, TImageAdjust } from '@/lib/config'
 import React, { memo, useContext } from 'react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Input } from '../ui/input'
@@ -9,20 +9,21 @@ import { SliderRange } from '../ui/range-slider'
 import { MdRotateLeft, MdRotateRight } from 'react-icons/md'
 import { LuFlipHorizontal, LuFlipVertical } from 'react-icons/lu'
 import { ImageAdjustContext } from '@/lib/imageAdjustContext'
+import EventEmitter from "reactjs-eventemitter";
 
 const Settings = memo(({settings}: {settings: ESettingsMenu | null}) => {
   const {adjust, setAdjust} = useContext(ImageAdjustContext)
   const getSettings = settigsMenuConfig[settings]
   
-  const setAdjustments = (obj: {editType: string, editValue: string, value: any}) => {
+  const setAdjustments = (obj: any) => {
     const {editType, editValue, value} = obj
     switch (settings) {
-      case ESettingsMenu.abjust:
-        const settingsAbjust: TImageAdjust['abjust'] = {
-          ...adjust.abjust,
+      case ESettingsMenu.adjust:
+        const settingsAbjust: TImageAdjust['adjust'] = {
+          ...adjust.adjust,
           [editValue]: value
         }
-        setAdjust({...adjust, abjust: settingsAbjust})
+        setAdjust({...adjust, adjust: settingsAbjust})
         break
       case ESettingsMenu.crop:
         const settingsCrop: TImageAdjust['crop'] = {
@@ -37,8 +38,12 @@ const Settings = memo(({settings}: {settings: ESettingsMenu | null}) => {
           [value.editType]: value.editValue
         }
         setAdjust({...adjust, filter: settingsFilter})
+        EventEmitter.emit(Events.applyFilters, settingsFilter)
         break
       case ESettingsMenu.resize:
+        if (obj.input.type == 'number') {
+          obj.value = Number(value)
+        }
         const settingsResize: TImageAdjust['resize'] = {
           ...adjust.resize,
           [editValue]: value
@@ -62,6 +67,7 @@ const Settings = memo(({settings}: {settings: ESettingsMenu | null}) => {
           }
         }
         setAdjust({...adjust, rotate: settingsRotate})
+        EventEmitter.emit(Events.applyRotate, settingsRotate)
         break  
       case ESettingsMenu.circle:
       case ESettingsMenu.line:
@@ -95,13 +101,13 @@ const Settings = memo(({settings}: {settings: ESettingsMenu | null}) => {
             return (
               <div key={i}>
                 <p>{obj.text}</p>
-                <Input type={obj.input.type} onChange={e => setAdjustments({...obj, value: e.target.value})} />
+                <Input type={obj.input.type} onChange={e => setAdjustments({...obj, value: e.target.value})} value={adjust[obj.editType][obj.editValue]} />
               </div>
             )
           } else if (obj.type == ESettingTypes.checkbox) {
             return (
               <div className='flex justify-center items-start gap-3'>
-                <Checkbox id={obj.input.id} onCheckedChange={e => setAdjustments({...obj, value: e})} />
+                <Checkbox id={obj.input.id} onCheckedChange={e => setAdjustments({...obj, value: e})} checked={adjust[obj.editType][obj.editValue]} />
                 <label
                   htmlFor={obj.input.id}
                   className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
@@ -145,9 +151,17 @@ const Settings = memo(({settings}: {settings: ESettingsMenu | null}) => {
                 ))}
               </div>
             )
+          } else if (obj.type == ESettingTypes.submit) {
+            return (
+              <div key={i} className='grid grid-cols-2 auto-rows-auto' >
+                <Button key={i} variant='ghost' className='rounded-none' onClick={e => EventEmitter.emit(obj.emitName, adjust[obj.emitType])}>
+                  {obj.text}
+                </Button>
+              </div>
+            )
           } else {
             return (
-              <></>
+              <div key={i}></div>
             )
           }
         })}

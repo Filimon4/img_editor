@@ -1,10 +1,11 @@
-import { dropdownNav, editorNav } from '@/lib/config'
+import { dropdownNav, editorNav, Events } from '@/lib/config'
 import React, { memo } from 'react'
 import { Button } from '../ui/button'
 import { Separator } from '../ui/separator'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu'
+import EventEmitter from "reactjs-eventemitter";
 
-const Nav = memo(({setSettingMenu}: {setSettingMenu: (e: number) => void}) => {
+const Nav = memo(({setSettingMenu, addNewElement}: {setSettingMenu: (e: number) => void, addNewElement: (data: any) => void}) => {
   return (
     <>
       {editorNav.map((obj, i) => (
@@ -22,8 +23,8 @@ const Nav = memo(({setSettingMenu}: {setSettingMenu: (e: number) => void}) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {obj.menu.map((m, i) => (
-                <DropdownMenuItem key={i}>{m.text}</DropdownMenuItem>
-              ))}
+                <DropdownMenuItem key={i} onClick={e => addNewElement({type: m.elemType, data: m.data})} >{m.text}</DropdownMenuItem>
+              ))} 
             </DropdownMenuContent>
           </DropdownMenu>
       ))}

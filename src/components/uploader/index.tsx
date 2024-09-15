@@ -25,7 +25,6 @@ const Uploader = () => {
 
   const uplodedImgsChanges = (e) => {
     if (fileUploaderRef.current?.files.length > 0) {
-      // console.log(fileUploaderRef.current?.files[0])
       const file = fileUploaderRef.current?.files[0]
       setFile(file)
       if (file.size > 5000000) {

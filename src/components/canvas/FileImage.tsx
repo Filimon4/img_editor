@@ -1,140 +1,264 @@
-import { TImageAdjust } from "@/lib/config";
+import { Events, TImageAdjust } from "@/lib/config";
 import Konva from "konva";
 import React, { RefObject } from "react";
 import { Image } from 'react-konva';
+import EventEmitter from "reactjs-eventemitter";
 
 export interface IFIleProps {
   file: File;
   x: number;
   y: number;
   refImage: React.MutableRefObject<any>;
-  adjust: TImageAdjust 
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
+export interface IFIleState {
+  image: HTMLImageElement,
+  crop: TImageAdjust['crop'],
+  resize: TImageAdjust['resize'],
+  rotate: TImageAdjust['rotate'],
+  adjust: TImageAdjust['adjust'],
+  filter: TImageAdjust['filter']
+}
 
-class FileImage extends React.Component<IFIleProps> {
-  state = {
-    image: null,
-  };
-  image = null
-  aspectRation: number = null
-  scale = 0.85
+class FileImage extends React.Component<IFIleProps, IFIleState> {
+  imgAspectRation: number = null
+  imgActualWidth: number = null
+  imgActualHeight: number = null
+  img: HTMLImageElement;
 
   constructor (props: IFIleProps) {
     super(props)
 
     this.state = {
       image: null,
+      crop: {
+        ratio: "None",
+        x: 0,
+        y: 0,
+        width: this.props.canvasWidth,
+        height: this.props.canvasHeight
+      },
+      resize: {
+        width: 0,
+        height: 0,
+        aspect: false
+      },
+      rotate: {
+        deg: 0,
+        flip: {
+          hor: false,
+          ver: false
+        }
+      },
+      adjust: {
+        brightenes: 0,
+        contrast: 0,
+        saturation: 0,
+        exposition: 0
+      },
+      filter: {
+        type: "None"
+      },
     }
-    this.image = null
   }
 
   componentDidMount() {
     this.loadImage();
+
+    EventEmitter.subscribe(Events.applyAdjust, (data: TImageAdjust['adjust']) => {
+      console.log(data)
+      this.setState({
+        ...this.state,
+        adjust: data
+      })
+    })
+    EventEmitter.subscribe(Events.applyFilters, (data: TImageAdjust['filter']) => {
+      this.setState({
+        ...this.state,
+        filter: data
+      })
+    })
+    EventEmitter.subscribe(Events.applyResize, (data: TImageAdjust['resize']) => {
+      const {} = this.state
+      this.setState({
+        ...this.state,
+        resize: {
+          aspect: data.aspect,
+          height: Number(data.height),
+          width: Number(data.width),
+        }
+      })
+    })
+    EventEmitter.subscribe(Events.applyRotate, (data: TImageAdjust['rotate']) => {
+      console.log(data)
+      this.setState({
+        ...this.state,
+        rotate: data
+      })
+    })
+    EventEmitter.subscribe(Events.applyCrop, (data: TImageAdjust['crop']) => {
+      this.cropImg(data)
+      
+    })
   }
+
   componentWillUnmount() {
-    this.image.removeEventListener('load', this.handleLoad);
   }
   
   componentDidUpdate(prevProps, prevState, snapShot) {
-    // this.setRotate()
     this.resizeImg()
+    this.setRotate()
     this.setFilters()
   }
   shouldComponentUpdate(nextProps: Readonly<IFIleProps>, nextState: Readonly<{}>, nextContext: any): boolean {
-    //@ts-ignore
     return true
   }
 
   loadImage() {
-    this.image = new window.Image();
-    this.image.src = URL.createObjectURL(this.props.file)
-    this.image.addEventListener('load', this.handleLoad);
-  }
-  handleLoad = () => {
-    this.setState({
-      image: this.image,
-    });
-
-    this.resizeImg()
-    
-  };
-  resizeImg = () => {
-    if (this.props.refImage.current && this.props.refImage.current.width() ) {
-      if (this.aspectRation == null) {
-        this.aspectRation = this.props.refImage.current.width() / this.props.refImage.current.height() 
-      }
-      const {width: parentWidth, height: parentHeight} = this.props.refImage.current.parent.parent.attrs
-      const parentRation = parentWidth / parentHeight
+    this.img = new window.Image();
+    this.img.src = URL.createObjectURL(this.props.file)
+    this.img.onload = () => {
+      this.imgActualHeight = this.img.height
+      this.imgActualWidth = this.img.width
+      this.imgAspectRation = this.imgActualWidth / this.imgActualHeight
+      let imgHeight = 0
+      let imgWidth = 0
       
-      let imgWidth = null
-      let imgHeight = null
-      let x = null
-      let y = null
-      if (this.aspectRation > 1) {
-        imgWidth = parentWidth * this.scale
-        imgHeight = parentWidth / this.aspectRation * this.scale
-      } else if (this.aspectRation == 1) {
-        const minDem = Math.min(parentHeight, parentWidth)
-        imgWidth = minDem * this.scale
-        imgHeight = minDem * this.scale
+      if (this.props.canvasHeight < this.props.canvasWidth) {
+        imgHeight = this.props.canvasHeight
+        imgWidth = this.props.canvasHeight * this.imgAspectRation
       } else {
-        imgWidth = parentHeight * this.scale
-        imgHeight = parentWidth * this.aspectRation * this.scale
+        imgWidth = this.props.canvasWidth
+        imgHeight = this.props.canvasWidth / this.imgAspectRation
       }
-      console.log(Math.abs(this.props.adjust.rotate.deg) % 360)
-      x = (parentWidth - imgWidth) / 2
-      y = (parentHeight - imgHeight) / 2
-      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 90) {
-        x = x + (parentWidth - imgHeight) / 2
-        y = y + (parentHeight + imgHeight) / 2
-        imgWidth = parentHeight 
-        imgHeight = parentHeight / this.aspectRation
-      }
-      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 180) {
-        x = (x + imgWidth)
-        y = (y + imgHeight)
-      }
-      if (Math.abs(this.props.adjust.rotate.deg) % 360 == 270) {
-        x = (parentWidth + imgHeight) / 2 - x
-        y = 0
-        imgWidth = parentHeight
-        imgHeight = parentHeight / this.aspectRation
-      }
-      this.props.refImage.current.size({
-        width: imgWidth,
-        height: imgHeight
-      })
-      if (this.props.refImage.current.scale().x == -1) {
-        x = x + imgWidth
-      }
-      if (this.props.refImage.current.scale().y == -1) {
-        y = y + imgHeight
-      }
-      this.props.refImage.current.position({
-        x,
-        y
-      })
+      
+      this.setState({
+        ...this.state,
+        image: this.img,
+        resize: {
+          aspect: true,
+          height: imgHeight,
+          width: imgWidth
+        },
+        crop: {
+          ratio: "None",
+          height: 0,
+          width: 0,
+          x: 0,
+          y: 0
+        }
+      });
     }
   }
+
+  resizeImg = () => {
+      const minusX = this.state.crop.x
+      const minusY = this.state.crop.y
+      const minusWidth = this.state.crop.width
+      const minusHeight = this.state.crop.height
+
+      this.props.refImage.current.size({
+        width: this.state.resize.width - (minusWidth / (this.imgActualWidth / this.state.resize.width)),
+        height: this.state.resize.height - (minusHeight / (this.imgActualWidth / this.state.resize.width))
+      })
+      this.props.refImage.current.crop({
+        x: minusX,
+        y: minusY,
+        width: this.imgActualWidth - minusWidth,
+        height: this.imgActualHeight - minusHeight
+      })
+      this.props.refImage.current.position({
+        y: 0,
+        x: 0
+      })
+      // this.props.refImage.current.crop({
+      //   width: this.state.crop.width,
+      //   height: this.state.crop.height,
+      //   x: this.state.crop.x,
+      //   y: this.state.crop.y
+      // })
+
+      // if (this.props.adjust.resize.aspect == true) {
+      //   this.aspectRation = this.props.refImage.current.width() / this.props.refImage.current.height() 
+        
+      //   if (this.aspectRation > 1) {
+      //     imgWidth = parentWidth * this.scale
+      //     imgHeight = parentWidth / this.aspectRation * this.scale
+      //   } else if (this.aspectRation == 1) {
+      //     const minDem = Math.min(parentHeight, parentWidth)
+      //     imgWidth = minDem * this.scale
+      //     imgHeight = minDem * this.scale
+      //   } else {
+      //     imgWidth = parentHeight * this.scale
+      //     imgHeight = parentWidth * this.aspectRation * this.scale
+      //   }
+      // }
+      // x = (parentWidth - imgWidth) / 2
+      // y = (parentHeight - imgHeight) / 2
+        
+      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 90) {
+      //   x = x + (parentWidth - imgHeight) / 2
+      //   y = y + (parentHeight + imgHeight) / 2
+      //   imgWidth = parentHeight 
+      //   imgHeight = parentHeight / this.aspectRation
+      // }
+      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 180) {
+      //   x = (x + imgWidth)
+      //   y = (y + imgHeight)
+      // }
+      // if (Math.abs(this.props.adjust.rotate.deg) % 360 == 270) {
+      //   x = (parentWidth + imgHeight) / 2 - x
+      //   y = 0
+      //   imgWidth = parentHeight
+      //   imgHeight = parentHeight / this.aspectRation
+      // }
+
+      // this.props.refImage.current.size({
+      //   width: imgWidth,
+      //   height: imgHeight
+      // })
+
+      // if (this.props.refImage.current.scale().x == -1) {
+      //   x = x + imgWidth
+      // }
+      // if (this.props.refImage.current.scale().y == -1) {
+      //   y = y + imgHeight
+      // }
+      // this.props.refImage.current.position({
+      //   x,
+      //   y
+      // })
+  }
+
   setFilters = () => {
     const image = this.props.refImage.current
     if (image) {
-      const {brightenes, contrast, exposition, saturation} = this.props.adjust.abjust
+      if (image.size().width <= 0 || image.size().height <= 0) return
+      const {brightenes, contrast, exposition, saturation} = this.state.adjust
       image.cache();
       image.filters([Konva.Filters.Brighten, Konva.Filters.Contrast, Konva.Filters.HSL, Konva.Filters.HSV]);
       image.brightness(brightenes/100);
       image.contrast(contrast);
-      image.value(exposition/100);
-      image.luminance(saturation/100)
+      image.luminance(exposition/100);
+      image.saturation(saturation/100)
+      if (this.state.filter.type == 'Sepia') {
+        image.filters([Konva.Filters.Sepia]);
+      } else if (this.state.filter.type == 'Black&White') {
+        image.luminance(0)
+        image.brightness(0);
+        image.contrast(0);
+        image.saturation(-1)
+      }
     }
   }
 
   setRotate = () => {
-    console.log('rotate')
-    console.log(this.props.refImage.current.scale())
-    this.props.refImage.current.rotation(this.props.adjust.rotate.deg)
-    if (this.props.adjust.rotate.flip.hor) {
+    this.props.refImage.current.rotation(this.state.rotate.deg)
+    let offsetX = 0
+    let offsetY = 0
+    if (!this.state.rotate.flip.hor) {
       this.props.refImage.current.scale({
         x: 1,
         y: this.props.refImage.current.scale().y
@@ -144,8 +268,9 @@ class FileImage extends React.Component<IFIleProps> {
         x: -1,
         y: this.props.refImage.current.scale().y
       })
+      offsetX += this.props.refImage.current.size().width
     }
-    if (this.props.adjust.rotate.flip.ver) {
+    if (!this.state.rotate.flip.ver) {
       this.props.refImage.current.scale({
         x: this.props.refImage.current.scale().x,
         y: 1
@@ -155,16 +280,36 @@ class FileImage extends React.Component<IFIleProps> {
         x: this.props.refImage.current.scale().x,
         y: -1
       })
+      offsetY += this.props.refImage.current.size().height
+    }
+    this.props.refImage.current.rotation(this.state.rotate.deg)
+    if (Math.abs(this.state.rotate.deg) % 360 == 90) {
+      offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+    }
+    if (Math.abs(this.state.rotate.deg) % 360 == 180) {
+      offsetX += this.props.refImage.current.size().width * this.props.refImage.current.scale().x
+      offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
 
     }
+    if (Math.abs(this.state.rotate.deg) % 360 == 270) {
+      offsetY += this.props.refImage.current.size().height * this.props.refImage.current.scale().y
+      
+    }
+    this.props.refImage.current.offsetX(offsetX)
+    this.props.refImage.current.offsetY(offsetY)
   }
 
-  setCrop = () => {
-    this.props.refImage.current.crop({
-      x: 0,
-      y: 0,
-      width: this.state.image.width,
-      height:this.state.image.height
+  cropImg(data)  {
+    if (!data) return
+    this.setState({
+      ...this.state,
+      crop: {
+        ratio: 'None',
+        height: this.state.resize.height - data.height,
+        width: this.state.resize.width - data.width,
+        x: data.x,
+        y: data.y
+      }
     })
   }
 

@@ -1,12 +1,14 @@
-import { TImageAdjust } from '@/lib/config';
+import { Events, TImageAdjust } from '@/lib/config';
 import Konva from 'konva'
 import React, { Component } from 'react'
 import { Circle, Image, Rect } from 'react-konva'
+import EventEmitter from "reactjs-eventemitter";
 
 export interface ICropProps {
   refImage: React.MutableRefObject<any>,
   setAdjust: React.Dispatch<React.SetStateAction<TImageAdjust>>,
-  adjust: TImageAdjust
+  adjust: TImageAdjust,
+  refRect: React.MutableRefObject<any> 
 }
 
 export default class CropImage extends Component<ICropProps> {
@@ -16,8 +18,7 @@ export default class CropImage extends Component<ICropProps> {
     topLeft: null,
     bottomLeft: null,
     topRight: null,
-    bottonRight: null,
-    rect: null
+    bottomRight: null,
   }
 
   constructor(props) {
@@ -29,13 +30,21 @@ export default class CropImage extends Component<ICropProps> {
       topLeft: null,
       bottomLeft: null,
       topRight: null,
-      bottonRight: null,
-      rect: null
+      bottomRight: null,
     }
   }
 
   componentDidMount(): void {
     this.setCorners()
+
+    EventEmitter.subscribe(Events.setCrop, (data) => {
+      EventEmitter.emit(Events.applyCrop, {
+        width: this.props.refRect.current.size().width,
+        height: this.props.refRect.current.size().height,
+        x: this.props.refRect.current.position().x,
+        y: this.props.refRect.current.position().y
+      })
+    })
   }
 
   componentDidUpdate(prevProps: Readonly<ICropProps>, prevState: Readonly<{}>, snapshot?: any): void {
@@ -73,37 +82,48 @@ export default class CropImage extends Component<ICropProps> {
     })
   }
   setBottomRight(): void {
-    this.state.bottonRight.position({
+    this.state.bottomRight.position({
       x: this.props.refImage.current.getAttrs().x+this.props.refImage.current.size().width,
       y: this.props.refImage.current.getAttrs().y+this.props.refImage.current.size().height
     })
   }
   updateRect(): void {
-    this.state.rect.size({
-      width: Math.abs(this.state.topLeft.getAttrs().x - this.state.topRight.getAttrs().x),
-      height: Math.abs(this.state.topLeft.getAttrs().y - this.state.bottomLeft.getAttrs().y)
+    let imgWidht = Math.abs(this.state.topLeft.getAttrs().x - this.state.topRight.getAttrs().x)
+    let imgHeight = Math.abs(this.state.topLeft.getAttrs().y - this.state.bottomLeft.getAttrs().y)
+    if (this.props.adjust.crop.ratio !== "None") {
+      let [width, height] = this.props.adjust.crop.ratio.split(':')
+      if (Number(width) == Number(height)) {
+        if (imgHeight > imgWidht) {
+          imgHeight = imgWidht
+        } else {
+          imgWidht = imgHeight
+        }
+      } else {
+        const OnePartWidth = imgWidht / Number(width)
+        imgHeight = Number(height) * OnePartWidth 
+      } 
+    }
+    this.props.refRect.current.size({
+      width: imgWidht,
+      height: imgHeight
     })
-    this.state.rect.position({
+    this.props.refRect.current.position({
       y: this.state.topLeft.getAttrs().y,
       x: this.state.topLeft.getAttrs().x
     })
-
-    // console.log(this.state.rect.getAttrs(), this.state.rect.size())
-    // this.props.setAdjust({
-    //   ...this.props.adjust,
-    //   crop: {
-    //     ...this.props.adjust.crop,
-    //     x: this.state.rect.getAttrs().x,
-    //     y: this.state.rect.getAttrs().y,
-    //     width: this.state.rect.size().width,
-    //     height: this.state.rect.size().height,
-    //   }
-    // })
-
+  }
+  getRect() {
+    return {  
+      width: this.props.refRect.current.size().width,
+      height: this.props.refRect.current.size().height,
+      x: this.props.refRect.current.position().x,
+      y: this.props.refRect.current.position().y
+    }
+    
   }
 
   setCorners(): void {
-    if (this.props.refImage.current && this.state.bottomLeft && this.state.bottonRight && this.state.topLeft && this.state.topRight) {
+    if (this.props.refImage.current && this.state.bottomLeft && this.state.bottomRight && this.state.topLeft && this.state.topRight) {
       this.setBottomRight()
       this.setBottomLeft()
       this.setTopLeft()
@@ -191,28 +211,28 @@ export default class CropImage extends Component<ICropProps> {
     }
   }
   checkBoundsBottomRight(): void {
-    if (this.state.bottonRight.getAttrs().x < this.props.refImage.current.getAttrs().x) {
-      this.state.bottonRight.position({
-        y: this.state.bottonRight.getAttrs().y,
+    if (this.state.bottomRight.getAttrs().x < this.props.refImage.current.getAttrs().x) {
+      this.state.bottomRight.position({
+        y: this.state.bottomRight.getAttrs().y,
         x: this.props.refImage.current.getAttrs().x
       })
     }
-    if (this.state.bottonRight.getAttrs().x > this.props.refImage.current.getAttrs().x+this.props.refImage.current.size().width){
-      this.state.bottonRight.position({
-        y: this.state.bottonRight.getAttrs().y,
+    if (this.state.bottomRight.getAttrs().x > this.props.refImage.current.getAttrs().x+this.props.refImage.current.size().width){
+      this.state.bottomRight.position({
+        y: this.state.bottomRight.getAttrs().y,
         x: this.props.refImage.current.getAttrs().x+this.props.refImage.current.size().width
       })
     }
-    if (this.state.bottonRight.getAttrs().y < this.props.refImage.current.getAttrs().y){
-      this.state.bottonRight.position({
+    if (this.state.bottomRight.getAttrs().y < this.props.refImage.current.getAttrs().y){
+      this.state.bottomRight.position({
         y: this.props.refImage.current.getAttrs().y,
-        x: this.state.bottonRight.getAttrs().x
+        x: this.state.bottomRight.getAttrs().x
       })
     }
-    if (this.state.bottonRight.getAttrs().y > this.props.refImage.current.getAttrs().y+this.props.refImage.current.size().height){
-      this.state.bottonRight.position({
+    if (this.state.bottomRight.getAttrs().y > this.props.refImage.current.getAttrs().y+this.props.refImage.current.size().height){
+      this.state.bottomRight.position({
         y: this.props.refImage.current.getAttrs().y+this.props.refImage.current.size().height,
-        x: this.state.bottonRight.getAttrs().x
+        x: this.state.bottomRight.getAttrs().x
       })
     }
   }
@@ -227,6 +247,10 @@ export default class CropImage extends Component<ICropProps> {
       y: this.state.bottomLeft.getAttrs().y,
       x: this.state.topLeft.getAttrs().x
     })
+    this.state.bottomRight.position({
+      y: this.state.bottomRight.getAttrs().y,
+      x: this.state.topRight.getAttrs().x
+    })
     this.updateRect()
   }
   dragTopRight(): void {
@@ -235,9 +259,13 @@ export default class CropImage extends Component<ICropProps> {
       y: this.state.topRight.getAttrs().y,
       x: this.state.topLeft.getAttrs().x
     })
-    this.state.bottonRight.position({
-      y: this.state.bottonRight.getAttrs().y,
+    this.state.bottomRight.position({
+      y: this.state.bottomRight.getAttrs().y,
       x: this.state.topRight.getAttrs().x
+    })
+    this.state.bottomLeft.position({
+      y: this.state.bottomLeft.getAttrs().y,
+      x: this.state.topLeft.getAttrs().x
     })
     this.updateRect()
   }
@@ -247,21 +275,21 @@ export default class CropImage extends Component<ICropProps> {
       y: this.state.topLeft.getAttrs().y,
       x: this.state.bottomLeft.getAttrs().x
     })
-    this.state.bottonRight.position({
-      y: this.state.bottomLeft.getAttrs().y,
-      x: this.state.bottonRight.getAttrs().x
+    this.state.bottomRight.position({
+      y: this.state.topRight.getAttrs().y+this.props.refRect.current.size().height,
+      x: this.state.topRight.getAttrs().x
     })
     this.updateRect()
   }
   dragBottomRight(): void {
     this.checkBoundsBottomRight();
     this.state.bottomLeft.position({
-      y: this.state.bottonRight.getAttrs().y,
-      x: this.state.bottomLeft.getAttrs().x
+      y: this.state.bottomRight.getAttrs().y,
+      x: this.state.topLeft.getAttrs().x
     })
     this.state.topRight.position({
       y: this.state.topRight.getAttrs().y,
-      x: this.state.bottonRight.getAttrs().x
+      x: this.state.bottomRight.getAttrs().x
     })
     this.updateRect()
   }
@@ -269,11 +297,11 @@ export default class CropImage extends Component<ICropProps> {
   render() {
     return (
       <>
-        <Rect ref={(node) => this.state.rect = node} x={this.state.x} y={this.state.y} fill={'transparent'} stroke={'#12A3F8'} strokeWidth={5} />
+        <Rect ref={this.props.refRect} x={this.state.x} y={this.state.y} fill={'transparent'} stroke={'#12A3F8'} strokeWidth={5} />
         <Circle draggable ref={(node) => this.state.topLeft = node} fill={'white'} radius={5} stroke={'#12A3F8'} strokeWidth={2}  onDragMove={e => this.dragTopLeft()} />
         <Circle draggable ref={(node) => this.state.topRight = node} fill={'white'} radius={5} stroke={'#12A3F8'} strokeWidth={2} onDragMove={e => this.dragTopRight()} />
         <Circle draggable ref={(node) => this.state.bottomLeft = node} fill={'white'} radius={5} stroke={'#12A3F8'} strokeWidth={2} onDragMove={e => this.dragBottomLeft()} />
-        <Circle draggable ref={(node) => this.state.bottonRight = node} fill={'white'} radius={5} stroke={'#12A3F8'} strokeWidth={2} onDragMove={e => this.dragBottomRight()} />
+        <Circle draggable ref={(node) => this.state.bottomRight = node} fill={'white'} radius={5} stroke={'#12A3F8'} strokeWidth={2} onDragMove={e => this.dragBottomRight()} />
       </>
     )
   }
